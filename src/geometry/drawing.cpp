@@ -348,7 +348,7 @@ void fillTriangelInterpolation(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, TG
 		int left_x = v0.x + (y - v0.y) * alpha;
 		int right_x = v0.x + (y - v0.y) * beta;
 		if(left_x > right_x) swap(left_x, right_x);
-		for(int x = left_x; x < right_x; x++)
+		for(int x = left_x; x <= right_x; x++)
 			image.set(x, y, color);
 	}
 	for(int y = v1.y; y > v2.y; y--)
@@ -356,7 +356,7 @@ void fillTriangelInterpolation(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, TG
 		int left_x = v1.x + (y - v1.y) * gamma;
 		int right_x = v0_v2_split + (y - v1.y) * beta;
 		if(left_x > right_x) swap(left_x, right_x);
-		for(int x = left_x; x < right_x; x++)
+		for(int x = left_x; x <= right_x; x++)
 			image.set(x, y, color);
 	}
 }
@@ -383,7 +383,7 @@ void fillTriangelInterpolation(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, co
 		int left_x = v0.x + (y - v0.y) * alpha;
 		int right_x = v0.x + (y - v0.y) * beta;
 		if(left_x > right_x) swap(left_x, right_x);
-		for(int x = left_x; x < right_x; x++)
+		for(int x = left_x; x <= right_x; x++)
 			image.set(x, y, color);
 	}
 	for(int y = v1.y; y > v2.y; y--)
@@ -391,7 +391,7 @@ void fillTriangelInterpolation(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, co
 		int left_x = v1.x + (y - v1.y) * gamma;
 		int right_x = v0_v2_split + (y - v1.y) * beta;
 		if(left_x > right_x) swap(left_x, right_x);
-		for(int x = left_x; x < right_x; x++)
+		for(int x = left_x; x <= right_x; x++)
 			image.set(x, y, color);
 	}
 }
@@ -455,7 +455,7 @@ void fillTriangelInterpolation(Vec3i v0, Vec3i v1, Vec3i v2, TGAImage& image, co
 		int left_x = v0.x + (y - v0.y) * alpha;
 		int right_x = v0.x + (y - v0.y) * beta ;
 		if(left_x > right_x) swap(left_x, right_x);
-		for(int x = left_x; x < right_x; x++)
+		for(int x = left_x; x <= right_x; x++)
 			image.set(x, y, color);
 	}
 	for(int y = v1.y; y > v2.y; y--)
@@ -463,12 +463,12 @@ void fillTriangelInterpolation(Vec3i v0, Vec3i v1, Vec3i v2, TGAImage& image, co
 		int left_x = v1.x + (y - v1.y) * gamma;
 		int right_x = v0_v2_split + (y - v1.y) * beta;
 		if(left_x > right_x) swap(left_x, right_x);
-		for(int x = left_x; x < right_x; x++)
+		for(int x = left_x; x <= right_x; x++)
 			image.set(x, y, color);
 	}
 }
 
-void drawGrid(TGAImage &image)
+void drawAxis(TGAImage &image)
 {
 	int width = image.get_width() - 1;
 	int height =  image.get_height() - 1;
@@ -497,4 +497,44 @@ void drawGrid(TGAImage &image)
 	drawLine(center.x, center.y, 0, height -100, image, yellow);
 	drawLine(center.x, center.y, 100, height, image, yellow);
 
+}
+
+float bilineatInterpolation(Vec3f A, Vec3f B, Vec3f C, Vec3f D, Vec3f P)
+{
+	float Zm = A.z + (P.x - A.x) * (D.z - A.z) / (D.x - A.x);
+	float Zn = B.z + (P.x - B.x) * (C.z - B.z) / (C.x - B.x);
+	float Zp = Zm + (P.y - A.y) * (Zn - Zm) / (B.y - A.y);
+}
+
+void fillImage(TGAImage &image, TGAColor color)
+{
+	for(size_t x = 0; x < static_cast<size_t>(image.get_width()); x++)
+		for(size_t y = 0; y < static_cast<size_t>(image.get_height()); y++)
+			image.set(x, y, color);
+}
+
+void drawLineHorizontal(Vec2i v0, Vec2i v1, TGAImage &image, TGAColor color)
+{
+	if(v0.y != v1.y) return;
+	if(v1.x < v0.x) swap(v0, v1);
+	for(int x = v0.x; x <= v1.x; x++)	
+		image.set(x, v0.y, color);
+}
+
+void drawLineVertical(Vec2i v0, Vec2i v1, TGAImage &image, TGAColor color)
+{
+	if(v0.x != v1.x) return;
+	if(v1.y < v0.y) swap(v0, v1);
+	for(int y = v0.y; y <= v1.y; y++)
+		image.set(v0.x, y, color);
+}
+
+void drawGrid(TGAImage& image, int step, TGAColor color)
+{
+	int height = image.get_height();
+	int width = image.get_width();
+	for(int y = 0;  y <= height; y+=step)
+		drawLineHorizontal(Vec2i(0, y), Vec2i(width - 1, y), image, color);
+	for(int x = 0;  x <= width; x+=step)
+		drawLineVertical(Vec2i(x, 0), Vec2i(x, height - 1), image, color);
 }

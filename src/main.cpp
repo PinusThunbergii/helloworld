@@ -24,9 +24,7 @@ void render(TGAImage &image, Model &model)
 	model.RotateY(toRadian(15.0f));
 	//model.RotateZ(toRadian(70.0f));
 	model.RotateX(toRadian(30.0f));
-	for(size_t x = 0; x < static_cast<size_t>(image.get_width()); x++)
-		for(size_t y = 0; y < static_cast<size_t>(image.get_height()); y++)
-			image.set(x, y, green);
+	fillImage(image, green);
 	Vec2i center;
 	uint width = image.get_width() - 1;
 	uint height =  image.get_height() - 1;
@@ -116,10 +114,13 @@ int main(int argc, char** argv) {
 #endif
 	//Model model("/home/alex/c_cpp/graphic/obj/obj/cube.obj");
 	//Model model("/home/alex/c_cpp/graphic/obj/obj/untitled.obj");
-	Model model("/home/alex/c_cpp/graphic/obj/african_head.obj");
+	//Model model("/home/alex/c_cpp/graphic/obj/african_head.obj");
 	//Model model("/home/alex/c_cpp/graphic/obj/obj/spider.obj");
 	//Model model("/home/alex/c_cpp/graphic/obj/obj/teapot.obj");
-	render(image, model);
+	//render(image, model);
+	//drawLineHorizontal(Vec2i(200, 200), Vec2i(500, 200), image, blue);
+	//drawLineVertical(Vec2i(200, 200), Vec2i(200, 500), image, red);
+	drawGrid(image);
 	image.flip_vertically(); 
 	image.write_tga_file("/home/alex/c_cpp/graphic/img/output.tga");
 	return 0;
