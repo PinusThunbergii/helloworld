@@ -1,4 +1,3 @@
-#include <math.h>
 #include "drawing.h"
 using std::swap;
 
@@ -408,29 +407,16 @@ void fillTriangelInterpolation(Vec3i v0, Vec3i v1, Vec3i v2, TGAImage& image, TG
 
 	int v0_v2_split = v0.x + (v1.y - v0.y) * beta;
 
-	/*
-	for(int x = v1.x; x < v0_v2_split; x++)
-		image.set(x, v1.y, indigo);
-	*/
-	
-	for(int y = v0.y; y > v1.y; y--)
+	for(int y = v0.y; y > v2.y; y--)
 	{
-		int left_x = ((v0.x) + (y - v0.y) * alpha);
-		int right_x = ((v0.x) + (y - v0.y) * beta);
+		int left_x = y > v1.y ? ((v0.x) + (y - v0.y) * alpha) : (v1.x + (y - v1.y) * gamma);
+		int right_x = y > v1.y ?((v0.x) + (y - v0.y) * beta) : (v0_v2_split + (y - v1.y) * beta);
 
 		if(left_x > right_x) swap(left_x, right_x);
 		for(int x = left_x; x <= right_x; x++)
 			image.set(x, y, color);
 	}
-	for(int y = v1.y; y > v2.y; y--)
-	{
-		int left_x = (v1.x + (y - v1.y) * gamma);
-		int right_x = (v0_v2_split + (y - v1.y) * beta);
 
-		if(left_x > right_x) swap(left_x, right_x);
-		for(int x = left_x; x <= right_x; x++)
-			image.set(x, y, color);
-	}
 }
 
 void fillTriangelInterpolation(Vec3i v0, Vec3i v1, Vec3i v2, TGAImage& image, const TGAColor &color, Zbuffer &z_buffer)
@@ -445,23 +431,11 @@ void fillTriangelInterpolation(Vec3i v0, Vec3i v1, Vec3i v2, TGAImage& image, co
 
 	int v0_v2_split = v0.x + (v1.y - v0.y) * beta;
 
-	/*
-	for(int x = v1.x; x < v0_v2_split; x++)
-		image.set(x, v1.y, indigo);
-	*/
-	
-	for(int y = v0.y; y > v1.y; y--)
+	for(int y = v0.y; y > v2.y; y--)
 	{
-		int left_x = v0.x + (y - v0.y) * alpha;
-		int right_x = v0.x + (y - v0.y) * beta ;
-		if(left_x > right_x) swap(left_x, right_x);
-		for(int x = left_x; x <= right_x; x++)
-			image.set(x, y, color);
-	}
-	for(int y = v1.y; y > v2.y; y--)
-	{
-		int left_x = v1.x + (y - v1.y) * gamma;
-		int right_x = v0_v2_split + (y - v1.y) * beta;
+		int left_x = y > v1.y ? ((v0.x) + (y - v0.y) * alpha) : (v1.x + (y - v1.y) * gamma);
+		int right_x = y > v1.y ?((v0.x) + (y - v0.y) * beta) : (v0_v2_split + (y - v1.y) * beta);
+
 		if(left_x > right_x) swap(left_x, right_x);
 		for(int x = left_x; x <= right_x; x++)
 			image.set(x, y, color);
@@ -499,11 +473,16 @@ void drawAxis(TGAImage &image)
 
 }
 
-float bilineatInterpolation(Vec3f A, Vec3f B, Vec3f C, Vec3f D, Vec3f P)
+float bilinearInterpolation(Vec3f A, Vec3f B, Vec3f C, Vec3f D, Vec2f P)
 {
 	float Zm = A.z + (P.x - A.x) * (D.z - A.z) / (D.x - A.x);
 	float Zn = B.z + (P.x - B.x) * (C.z - B.z) / (C.x - B.x);
 	float Zp = Zm + (P.y - A.y) * (Zn - Zm) / (B.y - A.y);
+}
+
+float linearInterpolation(Vec2f A, Vec2f B, float P)
+{
+	
 }
 
 void fillImage(TGAImage &image, TGAColor color)
@@ -537,4 +516,82 @@ void drawGrid(TGAImage& image, int step, TGAColor color)
 		drawLineHorizontal(Vec2i(0, y), Vec2i(width - 1, y), image, color);
 	for(int x = 0;  x <= width; x+=step)
 		drawLineVertical(Vec2i(x, 0), Vec2i(x, height - 1), image, color);
+	
+	std::mt19937 generator(M_1_PI);
+	std::uniform_int_distribution<int> uid(0, 255);
+
+	int i = width / step + 1;
+	int j = height / step + 1;
+	Vec3i ** grid = new Vec3i * [i];
+	for(int k = 0; k < i; k++)
+		grid[k] = new Vec3i[j];
+	
+	for(int x = 0;  x < i; x++)
+		for(int y = 0;  y < j; y++)
+			grid[x][y] = Vec3i(uid(generator), uid(generator), uid(generator));//uid(generator);
+
+	for(int x = 0;  x < image.get_width() - 1; x++)
+		for(int y = 0;  y < image.get_height() - 1; y++)
+		{
+			//FIX ME
+			
+			Vec2i p(x, y);
+			Vec3i vec_color  = bilinearInterpolation<Vec3i, Vec2i>(
+				grid[x/step][y/step],
+				grid[x/step][y/step+1], 
+				grid[x/step+1][y/step+1], 
+				grid[x/step+1][y/step], 
+				Vec2i(x/step*step,y/step*step),
+				Vec2i(x/step*step,y/step*step +step), 
+				Vec2i(x/step*step+step,y/step*step+step), 
+				Vec2i(x/step*step+step,y/step*step), p);
+			TGAColor color(vec_color.x, vec_color.y, vec_color.z, 255);
+			image.set(p.x, p.y, color);
+		}
+
+	for(int x = 0;  x < i; x++)
+		for(int y = 0;  y < j; y++)
+		{
+			TGAColor color(grid[x][y][0], grid[x][y][1], grid[x][y][2], 255);
+			drawCircle(Vec2i(x*step, y*step), 10, image, color);
+		}		
+
+	for(int k = 0; k < i; k++)
+		delete[] grid[k];
+	delete grid;		
+}
+
+
+void drawCircle(Vec2i center, int radius, TGAImage &image, TGAColor color, bool isFill)
+{
+	int x = 0;
+	int y = radius;
+	int delta = 1 - 2 * radius;
+	int error = 0;
+	while(y >= 0)
+	{
+		Vec2i p[4];
+		p[0] = Vec2i(center.x + x, center.y + y);
+		p[1] = Vec2i(center.x + x, center.y - y);
+		p[2] = Vec2i(center.x - x, center.y + y);
+		p[3] = Vec2i(center.x - x, center.y - y);
+		drawLineHorizontal(p[0], p[2], image, color);
+		drawLineHorizontal(p[1], p[3], image, color);
+		image.set(center.x + x, center.y + y, color);
+		image.set(center.x + x, center.y - y, color);
+		image.set(center.x - x, center.y + y, color);
+		image.set(center.x - x, center.y - y, color);
+		error = 2 * (delta + y) - 1;
+		if(delta < 0 && error <= 0)
+		{
+			delta += 2 * ++x + 1;
+			continue;
+		}
+		if(delta > 0 && error > 0)
+		{
+			delta -= 2 * --y + 1;
+			continue;
+		}
+		delta += 2 * (++x - y--);	
+	}
 }

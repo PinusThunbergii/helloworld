@@ -5,8 +5,10 @@
 #include <limits>
 #include <exception>
 #include <random>
+#include <vector>
 #include "tgaimage.h"
 #include "geometry.h"
+#include "interpolation.h"
 
 #define DRAW_BOUNDIND_BOX false
 #define DRAW_EDGES false
@@ -74,7 +76,8 @@ void fillTriangelInterpolation(Vec3i v0, Vec3i v1, Vec3i v2, TGAImage& image, co
 void fillRGB(Vec2i a, Vec2i b, Vec2i c, TGAImage& image);
 Vec3f getBarycentric(Vec2i v0, Vec2i v1, Vec2i v2, Vec2i point);
 
-float bilineatInterpolation(Vec3f A, Vec3f B, Vec3f C, Vec3f D, Vec3f P);
+float bilinearInterpolation(Vec3f A, Vec3f B, Vec3f C, Vec3f D, Vec2f P);
+float linearInterpolation(Vec2f A, Vec2f B, float P);
 
 void drawAxis(TGAImage &image);
 
@@ -84,4 +87,8 @@ void drawLineVertical(Vec2i v0, Vec2i v1, TGAImage &image, TGAColor color);
 void drawLineHorizontal(Vec2i v0, Vec2i v1, TGAImage &image, TGAColor color);
 
 void drawGrid(TGAImage& image, int step = 20, TGAColor color = red);
+
+void drawCircle(Vec2i center, int radius, TGAImage &image, TGAColor color, bool isFill = true);
+
+
 #endif
