@@ -65,6 +65,10 @@ void drawLine(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color)
 		D += 2 * delta_y;
 	}
 }
+void drawLine(Vec2i a, Vec2i b, TGAImage &image, TGAColor color)
+{
+	drawLine(a.x, a.y, b.x, b.y, image, color);
+}
 
 void fillTriangel(Vec2i a, Vec2i b, Vec2i c, TGAImage& image, TGAColor &color)
 {
@@ -154,17 +158,20 @@ void fillTriangel(Vec3i a, Vec3i b, Vec3i c, TGAImage& image, TGAColor &color, Z
 	//Vec3i n = cross(a-b, a-c);
 	for(int x = top_left.x; x < bottom_right.x; x++)
 	{
+		if(x >= image.get_width())
+			break;
+		if(x < 0) continue;
 		for(int y = bottom_right.y; y < top_left.y; y++)
 		{
 			current_point.x = x; 
 			current_point.y = y;
 			if(isInsideTriangel(a_2, b_2, c_2, current_point))
 			{
-				//uint32_t z = getDepth(a, b, c, current_point);
-				//uint32_t z = getDepth(n, a, current_point);
 				uint32_t z = 0;
 				Vec3f bc_coord = getBarycentric(a_2, b_2, c_2, current_point);
 				z = a.z * bc_coord[0] + b.z * bc_coord[1] + c.z * bc_coord[2];
+				if(y >= image.get_height() || y < 0)
+					continue;
 				if(z_buffer(x, y) < z)
 				{
 					z_buffer(x, y) = z;
@@ -478,11 +485,12 @@ float bilinearInterpolation(Vec3f A, Vec3f B, Vec3f C, Vec3f D, Vec2f P)
 	float Zm = A.z + (P.x - A.x) * (D.z - A.z) / (D.x - A.x);
 	float Zn = B.z + (P.x - B.x) * (C.z - B.z) / (C.x - B.x);
 	float Zp = Zm + (P.y - A.y) * (Zn - Zm) / (B.y - A.y);
+	return Zp;
 }
 
 float linearInterpolation(Vec2f A, Vec2f B, float P)
 {
-	
+	return 0.0f;
 }
 
 void fillImage(TGAImage &image, TGAColor color)

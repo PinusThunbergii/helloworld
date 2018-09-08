@@ -34,6 +34,15 @@ struct Zbuffer
 			delete[] buffer[i];
 		delete buffer;
 	};
+	void write_image(std::string file)
+	{
+		TGAImage z_buffer_image(this->width, this->height, TGAImage::GRAYSCALE);
+		for(size_t x = 0; x < this->width; x++)
+		for(size_t y = 0; y < this->height; y++)
+			z_buffer_image.set(x, y, TGAColor((*this)(x,y), 1));
+		z_buffer_image.flip_vertically();
+		z_buffer_image.write_tga_file(file.c_str());
+	}
 	uint32_t &operator() (uint32_t x, uint32_t y)
 	{
 		if(x > width - 1 && y > height - 1)
@@ -54,6 +63,7 @@ const TGAColor slate_gray = TGAColor(112,128,144, 255);
 
 void drawLineClassic(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color);
 void drawLine(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color);
+void drawLine(Vec2i a, Vec2i b, TGAImage &image, TGAColor color);
 
 void fillTriangel(Vec2i a, Vec2i b, Vec2i c, TGAImage& image, TGAColor &color);
 void fillTriangel(Vec2i a, Vec2i b, Vec2i c, TGAImage& image, const TGAColor &color);
