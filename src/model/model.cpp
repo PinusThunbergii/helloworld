@@ -41,7 +41,7 @@ bool Model::OpenFile(const char *file)
         else if (line.compare(0, 2, "f ") == 0)
         {
             //temp >> trash;
-            std::vector<uint> vec;
+            std::vector<int> vec;
 
             std::stringstream test(line);
             std::string from_stream;

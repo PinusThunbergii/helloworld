@@ -21,7 +21,7 @@ public:
     size_t FacesSize() const
     {   return faces.size();};
 
-    std::vector<uint> GetFace(size_t i) const
+    std::vector<int> GetFace(size_t i) const
     {   return faces[i];    };
 
     Vec3f GetMax() const
@@ -97,7 +97,7 @@ public:
 private:
     std::fstream fileReader;
     std::vector<Vec3f> vertices;
-    std::vector<std::vector<uint>> faces;
+    std::vector<std::vector<int>> faces;
 protected:
 };
 

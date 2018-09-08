@@ -124,7 +124,7 @@ void render(TGAImage &image, Model &model)
 	
 	for (size_t i=0; i<model.FacesSize(); i++) 
 	{
-        std::vector<uint> face = model.GetFace(i);
+        std::vector<int> face = model.GetFace(i);
 
 		Vec3f world_coord[3];
 		for(size_t i = 0; i < 3; i++)
@@ -164,7 +164,8 @@ void render(TGAImage &image, Model &model)
 	zbuffer.write_image("/home/alex/c_cpp/graphic/img/z_buffer.tga");
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
 	TGAImage image(1000, 1000, TGAImage::RGB);
 	//Model model("/home/alex/c_cpp/graphic/obj/cube.obj");
 	//Model model("/home/alex/c_cpp/graphic/obj/untitled.obj");
