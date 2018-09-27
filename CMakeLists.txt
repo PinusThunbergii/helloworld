@@ -14,7 +14,6 @@ add_subdirectory(src/model)
 add_subdirectory(src/tgaimage)
 add_subdirectory(src/geometry)
 
-
 set(SOURCE_EXE src/main.cpp)
 
 message(STATUS ${CMAKE_CXX_FLAGS})

@@ -1,5 +1,5 @@
-#ifndef _MODEL_
-#define _MODEL_
+#ifndef __MODEL_H_
+#define __MODEL_H_
 
 #include <iostream>
 #include <string>

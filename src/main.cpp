@@ -7,6 +7,10 @@
 #include <limits>
 #include <algorithm>
 #include <type_traits>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <getopt.h>
 
 #include "tgaimage.h"
 #include "geometry.h"
@@ -115,22 +119,38 @@ mat<4, 4, float> RotateY(float a)
 	return m;
 }
 
-void render(TGAImage &image, Model &model)
+mat<4, 4, float> lookAt(Vec3f camera_pos, Vec3f up, Vec3f center)
 {
-	//model.RotateY(toRadian(30.0f));
-	//model.RotateX(toRadian(30.0f));
+	Vec3f z = (center - camera_pos).normalize();
+	Vec3f y = (up).normalize();
+	Vec3f x = cross(z, y).normalize();
+
+	mat<4, 4, float> m = mat<4, 4, float>::identity();
+	mat<4, 4, float> g = mat<4, 4, float>::identity();
+	for(int i = 0; i < 3; i++)
+	{
+		m[0][i] = x[i];
+		m[1][i] = y[i];
+		m[2][i] = z[i];
+		g[i][3] = -camera_pos[i];
+	}
+	return m * g;
+}
+
+void render(TGAImage &image, Model &model, std::string & zbuffer_name)
+{
 	fillImage(image, green);
 	Zbuffer zbuffer(image.get_width(), image.get_height());
 	Vec3f eye_dir(0,0,-1);
 	Vec3f bbox[2] = {model.GetMin(),  model.GetMax()};
 
-	//mat<4, 4, float> viewportMatrix = viewport(500, 500, 400, 400, 255);
-	//mat<4, 4, float> viewportMatrix =  viewport(0, 0, 400, 400, 255) * projection(Vec3f(0, 0, -7.0f), Vec3f(0,0,0), Vec3f(0, 0, -5.0f), Vec3f(0, 0, 5), 45.0f);// * normalized(bbox[0], bbox[1]);
-	//viewportMatrix = viewportMatrix * projection(Vec3f(0, 0, -3.0f), Vec3f(0,0,0), Vec3f(0, 0, -1.0f), Vec3f(0, 0, 5), 90.0f);
+	Vec3f camera_pos(5.0, 1.0, -5.0);
+	Vec3f center(0.0, 0.0, 0.0);
+	Vec3f up(0.0, -1.0, 0.0);
 	mat<4, 4, float> norm = normalized(bbox[0], bbox[1]);
-	mat<4, 4, float> pro = projection(Vec3f(0, 0, -10.0f), Vec3f(0, 0, 8.0f), 50.0f);
-
-	mat<4, 4, float> viewportMatrix =  viewport(200, 200, 600, 600, 255)  * pro * RotateX(35.0f) * RotateY(20.0f) ;//  * norm
+	mat<4, 4, float> pro = projection(Vec3f(0, 0, -2.0f), Vec3f(0, 0, 5.0f), 20.0f);//Vec3f(0, 0, -0.5f)
+	mat<4, 4, float> look = lookAt(camera_pos, up, center);
+	mat<4, 4, float> viewportMatrix =  viewport(200, 200, 600, 600, 255) * pro  * look ;// * norm;* RotateX(35.0f) * RotateY(20.0f)
 	for (size_t i=0; i<model.FacesSize(); i++) 
 	{
         std::vector<int> face = model.GetFace(i);
@@ -147,14 +167,12 @@ void render(TGAImage &image, Model &model)
 			//screen_coord[i] = vec4f_to_vec3f(viewportMatrix * vec3f_to_vec4f(world_coord[i]));
 			//cout << screen_coord[i] << " ";
 		}							
-		//cout << endl;
-
 		Vec3f n = cross((world_coord[2]-world_coord[0]),(world_coord[1] - world_coord[0]));
 
         n.normalize();
-		float intensity = n*eye_dir;
+		float intensity = n*(center-camera_pos).normalize();// eye_dir
 		TGAColor color = TGAColor(intensity*255, intensity*255, intensity*255, 255);
-        if (intensity>0)
+        if (intensity > 0)
 		{
 			fillTriangel(screen_coord[0], screen_coord[1], screen_coord[2], 
 						image, color, zbuffer);
@@ -169,25 +187,50 @@ void render(TGAImage &image, Model &model)
 			//			image, color, zbuffer);
         }
     }
-	
-	//cout << bbox[0] << " " << bbox[1] << endl;
-	//mat<4, 4, float> so = normalized(bbox[0], bbox[1]);
-	//cout << so << endl;
-	zbuffer.write_image("/home/alex/c_cpp/graphic/img/z_buffer.tga");
+	zbuffer.write_image(zbuffer_name.c_str());
 }
 
 int main(int argc, char** argv) 
 {
-	TGAImage image(1000, 1000, TGAImage::RGB);
-	//Model model("/home/alex/c_cpp/graphic/obj/cube.obj");
-	//Model model("/home/alex/c_cpp/graphic/obj/untitled.obj");
-	//Model model("/home/alex/c_cpp/graphic/obj/african_head.obj");
-	//Model model("/home/alex/c_cpp/graphic/obj/Vercetti.obj");
-	//Model model("/home/alex/c_cpp/graphic/obj/spider.obj");
-	Model model("/home/alex/c_cpp/graphic/obj/teapot.obj");
-	render(image, model);
+	const char * options = "w:h:i:o:h";
+	int i = 0;
+	int width = 0, height = 0;
+	std::string input, output;
+	while((i = getopt(argc, argv, options)) != -1)
+	{
+		switch(static_cast<char>(i))
+		{
+			case 'w':
+				width = atoi(optarg);
+				break;
+			case 'h':
+				height = atoi(optarg);
+				break;
+			case 'i':
+				input = optarg;
+				break;
+			case 'o':
+				output = optarg;
+				break;
+			case '?':
+				std::cout << "Usage -w 1000 -h 1000 -i /home/user/example.obj -o /home/user/example.tga" << std::endl;
+				return EXIT_FAILURE;
+				break;	
+			default:
+				return EXIT_FAILURE;
+				break;				
+		}
+	}
+	// ./main -w 1000 -h 1000 -i /home/alex/c_cpp/graphic/obj/african_head.obj -o /home/alex/c_cpp/graphic/img/african_head.tga
+	std::string zbuffer_name;
+	size_t extention_start;
+	if((extention_start = output.find_last_of('.')) != std::string::npos)
+		zbuffer_name = output.substr(0, extention_start);
+	zbuffer_name += std::string("_z_buffer.tga");	
+	TGAImage image(width, height, TGAImage::RGB);
+	Model model(input.c_str());
+	render(image, model, zbuffer_name);
 	image.flip_vertically(); 
-	image.write_tga_file("/home/alex/c_cpp/graphic/img/output.tga");
-	//cin.get();
+	image.write_tga_file(output.c_str());
 	return 0;
 }

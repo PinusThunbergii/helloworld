@@ -51,7 +51,7 @@ bool Model::OpenFile(const char *file)
             {
                 from_stream.erase();
                 test >> from_stream;
-                uint i = 0;
+                int i = 0;
                 std::stringstream numeric_stream(from_stream);
                 numeric_stream >> i;
                 i--;
