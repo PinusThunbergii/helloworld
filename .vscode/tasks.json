@@ -1,0 +1,68 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-release",
+            "type": "shell",
+            "command": "clear; cd build/release/; cmake ../../ -DCMAKE_BUILD_TYPE=Release; cmake --build ./ ",
+            "problemMatcher": {
+				"base": "$gcc",
+				"fileLocation": "absolute"
+			},
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build-debug",
+            "type": "shell",
+            "command": "clear; cd build/debug/; cmake ../../ -DCMAKE_BUILD_TYPE=Debug; cmake --build ./ ",
+            "problemMatcher": {
+				"base": "$gcc",
+				"fileLocation": "absolute"
+			},
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "clear-release",
+            "type": "shell",
+            "command": "cd build/release/; rm -rf ./*",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "clear-debug",
+            "type": "shell",
+            "command": "cd build/debug/; rm -rf ./*",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        /*{
+            "label": "run-release",
+            "type": "shell",
+            "dependsOn": [
+                "build-release"
+            ],
+            "command": "cd build/release/; ./main",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }*/
+    ]
+}

@@ -1,0 +1,40 @@
+{
+    // Используйте IntelliSense, чтобы узнать о возможных атрибутах.
+    // Наведите указатель мыши, чтобы просмотреть описания существующих атрибутов.
+    // Для получения дополнительной информации посетите: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "preLaunchTask": "build-debug",
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/main",
+            "args": ["-w", "1000",  
+                        "-h", "1000", 
+                        "-i", "/home/alex/c_cpp/graphic/obj/african_head.obj", 
+                        "-o", "/home/alex/c_cpp/graphic/img/african_head.tga"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        /*{
+            "name": "Debug",
+            "type": "gdb",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "target": "${workspaceRoot}/main",
+            "cwd": "${workspaceRoot}"
+            
+        }*/
+    ]
+}
