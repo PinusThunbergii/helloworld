@@ -1,5 +1,10 @@
 #ifndef _DRAWING_
 #define _DRAWING_
+
+#ifdef WINDOWS_BUILD
+	#define _USE_MATH_DEFINES
+#endif
+
 #include <math.h>
 #include <iostream>
 #include <limits>

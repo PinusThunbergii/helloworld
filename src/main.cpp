@@ -9,15 +9,19 @@
 #include <type_traits>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <getopt.h>
+
+#ifdef WINDOWS_BUILD
+	#define STATIC_GETOPT
+	#include "getopt.h"
+#else
+	#include <unistd.h>
+	#include <getopt.h>
+#endif 
 
 #include "tgaimage.h"
 #include "geometry.h"
 #include "drawing.h"
 #include "model.h"
-#include "interpolation.h"
-#include "color.h"
 
 using std::cout;
 using std::cin;
@@ -188,31 +192,36 @@ int main(int argc, char** argv)
 	int i = 0;
 	int width = 0, height = 0;
 	std::string input, output;
-	while((i = getopt(argc, argv, options)) != -1)
+	
+	do
 	{
-		switch(static_cast<char>(i))
+		//if (argc == 1)
+		//	i = static_cast<int>('?');
+		switch (static_cast<char>(i))
 		{
-			case 'w':
-				width = atoi(optarg);
-				break;
-			case 'h':
-				height = atoi(optarg);
-				break;
-			case 'i':
-				input = optarg;
-				break;
-			case 'o':
-				output = optarg;
-				break;
-			case '?':
-				std::cout << "Usage -w 1000 -h 1000 -i /home/user/example.obj -o /home/user/example.tga" << std::endl;
-				return EXIT_FAILURE;
-				break;	
-			default:
-				return EXIT_FAILURE;
-				break;				
+		case 'w':
+			width = atoi(optarg);
+			break;
+		case 'h':
+			height = atoi(optarg);
+			break;
+		case 'i':
+			input = optarg;
+			break;
+		case 'o':
+			output = optarg;
+			break;
+		//case 0:
+		case '?':
+			std::cout << "Usage -w 1000 -h 1000 -i /home/user/example.obj -o /home/user/example.tga" << std::endl;
+			return EXIT_FAILURE;
+			break;
+		default:
+			return EXIT_FAILURE;
+			break;
 		}
-	}
+	} while ((i = getopt(argc, argv, options)) != -1);
+
 	std::string zbuffer_name;
 	size_t extention_start;
 	if((extention_start = output.find_last_of('.')) != std::string::npos)
