@@ -121,9 +121,12 @@ mat<4, 4, float> RotateY(float a)
 
 mat<4, 4, float> lookAt(Vec3f camera_pos, Vec3f up, Vec3f center)
 {
+	//Vec3f z = (center - camera_pos).normalize();
+	//Vec3f y = (up).normalize();
+	//Vec3f x = cross(z, y).normalize();
 	Vec3f z = (center - camera_pos).normalize();
-	Vec3f y = (up).normalize();
-	Vec3f x = cross(z, y).normalize();
+	Vec3f x = cross(up, z).normalize();
+	Vec3f y = cross(z, x).normalize();
 
 	mat<4, 4, float> m = mat<4, 4, float>::identity();
 	mat<4, 4, float> g = mat<4, 4, float>::identity();
@@ -141,16 +144,15 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 {
 	fillImage(image, green);
 	Zbuffer zbuffer(image.get_width(), image.get_height());
-	Vec3f eye_dir(0,0,-1);
-	Vec3f bbox[2] = {model.GetMin(),  model.GetMax()};
-
-	Vec3f camera_pos(5.0, 1.0, -5.0);
+	Vec3f camera_pos(1.0, 0.0, 1.0);
 	Vec3f center(0.0, 0.0, 0.0);
-	Vec3f up(0.0, -1.0, 0.0);
-	mat<4, 4, float> norm = normalized(bbox[0], bbox[1]);
+	Vec3f up(0.0, 1.0, 0.0);
 	mat<4, 4, float> pro = projection(Vec3f(0, 0, -2.0f), Vec3f(0, 0, 5.0f), 20.0f);//Vec3f(0, 0, -0.5f)
+	pro = mat<4, 4, float>::identity();
+	//pro[3][2] = -1.0f / 20.0f;
 	mat<4, 4, float> look = lookAt(camera_pos, up, center);
 	mat<4, 4, float> viewportMatrix =  viewport(200, 200, 600, 600, 255) * pro  * look ;// * norm;* RotateX(35.0f) * RotateY(20.0f)
+
 	for (size_t i=0; i<model.FacesSize(); i++) 
 	{
         std::vector<int> face = model.GetFace(i);
@@ -164,27 +166,17 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 		{
 			world_coord[i] = vec4f_to_vec3f(viewportMatrix * vec3f_to_vec4f(world_coord[i]));
 			screen_coord[i] = world_coord[i] ;
-			//screen_coord[i] = vec4f_to_vec3f(viewportMatrix * vec3f_to_vec4f(world_coord[i]));
-			//cout << screen_coord[i] << " ";
 		}							
 		Vec3f n = cross((world_coord[2]-world_coord[0]),(world_coord[1] - world_coord[0]));
 
         n.normalize();
 		float intensity = n*(center-camera_pos).normalize();// eye_dir
 		TGAColor color = TGAColor(intensity*255, intensity*255, intensity*255, 255);
-        if (intensity > 0)
+        //if (intensity != 0)
+		if (intensity > 0)
 		{
 			fillTriangel(screen_coord[0], screen_coord[1], screen_coord[2], 
 						image, color, zbuffer);
-						
-			/*fillTriangelInterpolation(screen_coord[0], screen_coord[1], screen_coord[2], 
-						image, color, zbuffer);*/
-			//fillTriangel(Vec2i(a.x, a.y), Vec2i(b.x, b.y), Vec2i(c.x, c.y), image, color);
-           	//fillTriangel(a, b, c, image, color, zbuffer);
-		   	//fillTriangel(screen_coord[0], screen_coord[1], screen_coord[2],
-			//   			image, color, zbuffer);
-			//triangle(screen_coord[0], screen_coord[1], screen_coord[2],
-			//			image, color, zbuffer);
         }
     }
 	zbuffer.write_image(zbuffer_name.c_str());
@@ -221,7 +213,6 @@ int main(int argc, char** argv)
 				break;				
 		}
 	}
-	// ./main -w 1000 -h 1000 -i /home/alex/c_cpp/graphic/obj/african_head.obj -o /home/alex/c_cpp/graphic/img/african_head.tga
 	std::string zbuffer_name;
 	size_t extention_start;
 	if((extention_start = output.find_last_of('.')) != std::string::npos)
