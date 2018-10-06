@@ -189,14 +189,12 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 int main(int argc, char** argv) 
 {
 	const char * options = "w:h:i:o:h";
-	int i = 0;
+	int i = static_cast<char>('s');
 	int width = 0, height = 0;
 	std::string input, output;
 	
 	do
 	{
-		//if (argc == 1)
-		//	i = static_cast<int>('?');
 		switch (static_cast<char>(i))
 		{
 		case 'w':
@@ -211,7 +209,8 @@ int main(int argc, char** argv)
 		case 'o':
 			output = optarg;
 			break;
-		//case 0:
+		case 's':
+			continue;
 		case '?':
 			std::cout << "Usage -w 1000 -h 1000 -i /home/user/example.obj -o /home/user/example.tga" << std::endl;
 			return EXIT_FAILURE;
