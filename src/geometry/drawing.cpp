@@ -176,7 +176,7 @@ void fillTriangel(Vec3i a, Vec3i b, Vec3i c, TGAImage& image, TGAColor &color, Z
 				{
 					z_buffer(x, y) = z;
 					image.set(x, y, color);
-					//std::cout << x << " | " << y << " | " << z << std::endl;
+					//std::cout << x << " | " << y << " | " << z << " | " << bc_coord << " || " << a.z << " " << b.z  << " "  << c.z  << std::endl;
 				}
 			}	
 				
@@ -602,4 +602,16 @@ void drawCircle(Vec2i center, int radius, TGAImage &image, TGAColor color, bool 
 		}
 		delta += 2 * (++x - y--);	
 	}
+}
+
+Vec3f getLambda(Vec3f& v0, Vec3f& v1, Vec3f& v2, Vec3f& p)
+{
+	mat<3, 3, float> A = mat<3, 3, float>::identity();
+	for(size_t i = 0; i < 2; i++)
+	{
+		A[i][0] = v0[i];
+		A[i][1] = v1[i];
+		A[i][2] = v2[i];
+	}
+
 }

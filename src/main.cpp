@@ -51,46 +51,31 @@ mat<4, 4, float> viewport(int x, int y, int w, int h, int depth)
 	m[3][3] = 1.0f;
     m[0][0] = w/2.f;
     m[1][1] = h/2.f;
-    m[2][2] = depth/2.f;
-	//m[3][2] = 1.0f / -44.0f;
+    m[2][2] = -depth/2.f;
     return m;
 }
 
-mat<4, 4, float> projection(Vec3f near, Vec3f far, float fov) 
+mat<4, 4, float> perspective_projection(float near, float far, float left, float right, float bottom, float top) 
 {
-    mat<4, 4, float> m = mat<4, 4, float>::identity();
-	float d = fabs(near.z) + 1.0f;
-	float h = tanf(toRadian(fov / 2.0f)) *d;
-	float k = 1.0f / h;
-	
-    m[0][0] = k;
-    m[1][1] = k;
-    //m[2][2] = -(far.z + near.z) / (far.z - near.z);
-	m[2][2] = 1.0f;
-	//m[0][3] = -h + 1.0f / h;
-	//m[1][3] = -h + 1.0f / h;
-	//m[2][3] = 1.0f;
+	mat<4, 4, float> m;// = mat<4, 4, float>::identity();
+	m[0][0] = 2 * near / (right - left);
+    m[1][1] = 2 * near / (top - bottom);
+	m[2][2] = -(far + near) / (far - near);
+	m[3][2] = -1.0f;
 
-   	//m[2][3] = -(2.0f * near.z * far.z) / (far.z - near.z);
-	m[3][2] = -1.0f / d;
-	//m[3][2] = -1.f/(Vec3f(1, 1, 3) -Vec3f(0, 0, 0)).norm();
+	m[0][2] = (right + left) / (right - left);
+    m[1][2] = (top + bottom) / (top - bottom);
+	m[2][3] = -(2 * far * near) / (far - near);
     return m;
 }
 
-mat<4, 4, float> normalized(Vec3f min, Vec3f max, float min_n = -1.0f, float max_n = 1.0f) {
-    mat<4, 4, float> m;
-	Vec3f delta = max - min;
-	float k = (max_n - min_n) / std::max(std::max(delta.x, delta.y), delta.z);
-	m[0][0] = k;
-    m[1][1] = k;
-    m[2][2] = k;
-	m[3][3] = 1.0f;
-
-    m[0][3] = min_n - min[0] * k;
-    m[1][3] = min_n - min[1] * k;
-    m[2][3] = min_n - min[2] * k;
-	//m[3][3] = 1.0f / 0.5f;
-    return m;
+mat<4, 4, float> perspective_projection_fov(float near, float far, float fov_h, float fov_v)
+{
+	float top = tanf(toRadian(fov_v / 2.0f)) * fabs(near);
+	float right = tanf(toRadian(fov_h / 2.0f)) * fabs(near);
+	float bottom = -top;
+	float left = -right;
+	return perspective_projection(near, far, left, right, bottom, top); 
 }
 
 mat<4, 4, float> RotateX(float a)
@@ -125,13 +110,9 @@ mat<4, 4, float> RotateY(float a)
 
 mat<4, 4, float> lookAt(Vec3f camera_pos, Vec3f up, Vec3f center)
 {
-	//Vec3f z = (center - camera_pos).normalize();
-	//Vec3f y = (up).normalize();
-	//Vec3f x = cross(z, y).normalize();
-	Vec3f z = (center - camera_pos).normalize();
+	Vec3f z = (camera_pos - center).normalize();
 	Vec3f x = cross(up, z).normalize();
 	Vec3f y = cross(z, x).normalize();
-
 	mat<4, 4, float> m = mat<4, 4, float>::identity();
 	mat<4, 4, float> g = mat<4, 4, float>::identity();
 	for(int i = 0; i < 3; i++)
@@ -148,14 +129,16 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 {
 	fillImage(image, green);
 	Zbuffer zbuffer(image.get_width(), image.get_height());
-	Vec3f camera_pos(1.0, 0.0, 1.0);
-	Vec3f center(0.0, 0.0, 0.0);
-	Vec3f up(0.0, 1.0, 0.0);
-	mat<4, 4, float> pro = projection(Vec3f(0, 0, -2.0f), Vec3f(0, 0, 5.0f), 20.0f);//Vec3f(0, 0, -0.5f)
-	pro = mat<4, 4, float>::identity();
-	//pro[3][2] = -1.0f / 20.0f;
+	Vec3f camera_pos(0.0f, 0.0f, 2.5f);
+	Vec3f center(0.0f, 0.0f, 0.0f);
+	Vec3f up(0.0f, 1.0f, 0.0f);
+	Vec3f light_dir(0.0f, 0.0f, -1.0f );
+
+	camera_pos =  vec4f_to_vec3f(RotateY(45.0f) * RotateX(15.0f) * vec3f_to_vec4f(camera_pos));
+
+	mat<4, 4, float> pro = perspective_projection_fov(1.0f, 8.0f, 60, 60);
 	mat<4, 4, float> look = lookAt(camera_pos, up, center);
-	mat<4, 4, float> viewportMatrix =  viewport(200, 200, 600, 600, 255) * pro  * look ;// * norm;* RotateX(35.0f) * RotateY(20.0f)
+	mat<4, 4, float> viewportMatrix =  viewport(0, 0, image.get_width(), image.get_height(), 1024)  * pro * look;// * norm;* RotateX(35.0f) * RotateY(20.0f)  * pro
 
 	for (size_t i=0; i<model.FacesSize(); i++) 
 	{
@@ -169,18 +152,16 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 		for(size_t i = 0; i < 3; i++)
 		{
 			world_coord[i] = vec4f_to_vec3f(viewportMatrix * vec3f_to_vec4f(world_coord[i]));
-			screen_coord[i] = world_coord[i] ;
+			screen_coord[i] = world_coord[i];
 		}							
 		Vec3f n = cross((world_coord[2]-world_coord[0]),(world_coord[1] - world_coord[0]));
 
         n.normalize();
-		float intensity = n*(center-camera_pos).normalize();// eye_dir
-		TGAColor color = TGAColor(intensity*255, intensity*255, intensity*255, 255);
-        //if (intensity != 0)
+		float intensity = n*light_dir;
+		TGAColor color = TGAColor(intensity*255, intensity*255, intensity*255, intensity*255);
 		if (intensity > 0)
 		{
-			fillTriangel(screen_coord[0], screen_coord[1], screen_coord[2], 
-						image, color, zbuffer);
+			fillTriangel(screen_coord[0], screen_coord[1], screen_coord[2], image, color, zbuffer);
         }
     }
 	zbuffer.write_image(zbuffer_name.c_str());
@@ -231,5 +212,6 @@ int main(int argc, char** argv)
 	render(image, model, zbuffer_name);
 	image.flip_vertically(); 
 	image.write_tga_file(output.c_str());
+	cin.get();
 	return 0;
 }

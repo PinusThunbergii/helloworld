@@ -105,5 +105,6 @@ void drawGrid(TGAImage& image, int step = 20, TGAColor color = red);
 
 void drawCircle(Vec2i center, int radius, TGAImage &image, TGAColor color, bool isFill = true);
 
+Vec3f getLambda(Vec3f v0, Vec3f v1, Vec3f v2);
 
 #endif
