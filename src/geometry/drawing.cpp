@@ -613,5 +613,5 @@ Vec3f getLambda(Vec3f& v0, Vec3f& v1, Vec3f& v2, Vec3f& p)
 		A[i][1] = v1[i];
 		A[i][2] = v2[i];
 	}
-
+	return Vec3f(0.0, 0.0, 0.0);
 }

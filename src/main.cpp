@@ -169,10 +169,10 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 
 int main(int argc, char** argv) 
 {
-	const char * options = "w:h:i:o:h";
+	const char * options = "w:h:i:o:h:d:";
 	int i = static_cast<char>('s');
 	int width = 0, height = 0;
-	std::string input, output;
+	std::string input, output, diffuse;
 	
 	do
 	{
@@ -189,6 +189,9 @@ int main(int argc, char** argv)
 			break;
 		case 'o':
 			output = optarg;
+			break;
+		case 'd':
+			diffuse = optarg;
 			break;
 		case 's':
 			continue;
