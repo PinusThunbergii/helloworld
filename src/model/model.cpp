@@ -64,17 +64,42 @@ bool Model::OpenFile(const char *file)
 				int n = 0;
 				numeric_stream >> n;
 				n--;
-                vec.push_back(i);
-				vec_t.push_back(t);
-				vec_n.push_back(n);
+				if(i > -1)
+					vec.push_back(i);
+				if(t > -1)
+					vec_t.push_back(t);
+				if(n > -1)
+					vec_n.push_back(n);
             }
-            faces.push_back(vec);
-			faces_texture.push_back(vec_t);
-			faces_normals.push_back(vec_n);
+			if (vec.size())
+				faces.push_back(std::move(vec));
+			if(vec_t.size())
+				faces_texture.push_back(std::move(vec_t));
+			if (vec_n.size())
+				faces_normals.push_back(std::move(vec_n));
         }
 		else if (line.compare(0, 3, "vt ") == 0)
 		{
-			std::cout << line << std::endl;
+			//std::cout << line << std::endl;
+			//vt  0.213 0.478 0.000
+			std::stringstream test(line);
+			test >> trash;	test >> trash;
+			Vec2f vt;
+			test >> vt.x;
+			test >> vt.y;
+			texture_vertices.push_back(std::move(vt));
+		}
+		else if (line.compare(0, 3, "vn ") == 0)
+		{
+			//std::cout << line << std::endl;
+			//vn  0.001 0.482 -0.876
+			std::stringstream test(line);
+			test >> trash;	test >> trash;
+			Vec3f vn;
+			test >> vn.x;
+			test >> vn.y;
+			test >> vn.z;
+			normals.push_back(std::move(vn));
 		}
     }
 
@@ -126,6 +151,48 @@ Vec3f Model::GetVertex(size_t i) const
 	if (vertices.empty()) return Vec3f(-1.0f, -1.0f, -1.0f);
 	return vertices[i];
 }
+
+Vec2f Model::GetVertexTexture(size_t i) const
+{
+	return texture_vertices[i];
+}
+
+Vec3f Model::GetVertexNormal(size_t i) const
+{
+	return normals[i];
+}
+
+const std::vector<int>& Model::GetFace(size_t i) const
+{ 
+	//if(i < 0 || i > faces.size())
+	return faces[i]; 
+};
+
+const std::vector<int>& Model::GetFaceTexture(size_t i) const
+{ 
+	return faces_texture[i]; 
+};
+
+const std::vector<int>& Model::GetFaceNormal(size_t i) const
+{ 
+	return faces_normals[i]; 
+};
+
+std::string & Model::GetStat()
+{
+	std::string response;
+	response = "dummy";
+	return response;
+}
+
+size_t Model::VerticesSize() const
+{	
+	return vertices.size();
+};
+size_t Model::FacesSize() const
+{ 
+	return faces.size(); 
+};
 
 bool Model::LoadDiffuse(const char * file)
 {

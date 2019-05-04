@@ -16,12 +16,17 @@ public:
     Model(){};
     ~Model();
     bool OpenFile(const char * file);
-    size_t VerticesSize() const {return vertices.size();};
-    size_t FacesSize() const {return faces.size();};
-    std::vector<int> GetFace(size_t i) const {return faces[i];};
+    size_t VerticesSize() const;
+    size_t FacesSize() const;
+    const std::vector<int>& GetFace(size_t i) const;
+	const std::vector<int>& GetFaceTexture(size_t i) const;
+	const std::vector<int>& GetFaceNormal(size_t i) const;
     Vec3f GetMax() const;
     Vec3f GetMin() const;
     Vec3f GetVertex(size_t i) const;
+	Vec2f GetVertexTexture(size_t i) const;
+	Vec3f GetVertexNormal(size_t i) const;
+	std::string& GetStat();
 	bool LoadDiffuse(const char * file);
 private:
     std::fstream fileReader;
