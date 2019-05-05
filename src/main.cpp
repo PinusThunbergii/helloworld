@@ -143,6 +143,7 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 	for (size_t i=0; i<model.FacesSize(); i++) 
 	{
 		const std::vector<int>& face = model.GetFace(i);
+		const std::vector<int>& normal = model.GetFaceNormal(i);
 
 		Vec3f world_coord[3];
 		for(size_t i = 0; i < 3; i++)
