@@ -142,6 +142,74 @@ void fillTriangel(Vec2i a, Vec2i b, Vec2i c, TGAImage& image, const TGAColor &co
 	#endif
 }
 
+void fillTriangel(Vec3i a, Vec3i b, Vec3i c, Vec3f n0, Vec3f n1, Vec3f n2, Vec3f l, TGAImage& image, TGAColor &color, Zbuffer &z_buffer)
+{
+	if ((a.x == b.x && a.x == c.x) || (a.y == b.y && a.y == c.y))
+		return;
+	Vec2i top_left;
+	top_left.x = a.x < b.x ? (a.x < c.x ? a.x : c.x) : (b.x < c.x ? b.x : c.x);
+	top_left.y = a.y > b.y ? (a.y > c.y ? a.y : c.y) : (b.y > c.y ? b.y : c.y);
+	Vec2i bottom_right;
+	bottom_right.x = a.x > b.x ? (a.x > c.x ? a.x : c.x) : (b.x > c.x ? b.x : c.x);
+	bottom_right.y = a.y < b.y ? (a.y < c.y ? a.y : c.y) : (b.y < c.y ? b.y : c.y);
+
+	Vec2i current_point;
+	Vec2i a_2(a.x, a.y), b_2(b.x, b.y), c_2(c.x, c.y);
+
+
+
+	float light_intensity[3] = {l * n0, l * n1, l * n2};
+	
+	//Vec3i n = cross(a-b, a-c);
+	for (int x = top_left.x; x < bottom_right.x; x++)
+	{
+		if (x >= image.get_width())
+			break;
+		if (x < 0) continue;
+		for (int y = bottom_right.y; y < top_left.y; y++)
+		{
+			current_point.x = x;
+			current_point.y = y;
+			if (isInsideTriangel(a_2, b_2, c_2, current_point))
+			{
+				uint32_t z = 0;
+				Vec3f bc_coord = getBarycentric(a_2, b_2, c_2, current_point);
+				z = a.z * bc_coord[0] + b.z * bc_coord[1] + c.z * bc_coord[2];
+				//float i = light_intensity[0] * bc_coord[0] + light_intensity[1] * bc_coord[1] + light_intensity[2] * bc_coord[2];
+				Vec3f ad = n0 * bc_coord[0] + n1 * bc_coord[1] + n2 * bc_coord[2];
+				
+				float i = ad.normalize() * l;
+				i = fabs(i);
+				//std::cout << ad << " " << i << std::endl ;
+				
+				if (y >= image.get_height() || y < 0)
+					continue;
+				if (z_buffer(x, y) < z)
+				{
+					z_buffer(x, y) = z;
+					TGAColor af(i * (float)color.r, i * (float)color.g,  (float)color.b, 255);
+					image.set(x, y, af);
+					//std::cout << x << " | " << y << " | " << z << " | " << bc_coord << " || " << a.z << " " << b.z  << " "  << c.z  << std::endl;
+				}
+			}
+
+		}
+	}
+	//std::cout << "<==============================================>" << std::endl;
+#if DRAW_BOUNDIND_BOX == true
+	drawLine(top_left.x, top_left.y, top_left.x, bottom_right.y, image, red);
+	drawLine(top_left.x, top_left.y, bottom_right.x, top_left.y, image, red);
+	drawLine(top_left.x, bottom_right.y, bottom_right.x, bottom_right.y, image, red);
+	drawLine(bottom_right.x, top_left.y, bottom_right.x, bottom_right.y, image, red);
+#endif
+
+#if DRAW_EDGES == true
+	drawLine(a.x, a.y, b.x, b.y, image, red);
+	drawLine(b.x, b.y, c.x, c.y, image, red);
+	drawLine(c.x, c.y, b.x, b.y, image, red);
+#endif
+}
+
 void fillTriangel(Vec3i a, Vec3i b, Vec3i c, TGAImage& image, TGAColor &color, Zbuffer &z_buffer)
 {
 	if((a.x == b.x && a.x == c.x) || (a.y == b.y && a.y == c.y))
@@ -260,6 +328,21 @@ bool isInsideTriangel(Vec2i &a, Vec2i &b, Vec2i &c, Vec2i &point)
 		return false;
 }
 
+bool isInsideTriangel(Vec2f &a, Vec2f &b, Vec2f &c, Vec2f &point)
+{
+	int f_ab = 0, f_bc = 0, f_ac = 0;
+
+	f_ab = (b.y - a.y) * (point.x - a.x) - (b.x - a.x) * (point.y - a.y);
+	f_bc = (c.y - b.y) * (point.x - b.x) - (c.x - b.x) * (point.y - b.y);
+	f_ac = (a.y - c.y) * (point.x - c.x) - (a.x - c.x) * (point.y - c.y);
+	if (f_ab >= 0 && f_bc >= 0 && f_ac >= 0)
+		return true;
+	else if (f_ab <= 0 && f_bc <= 0 && f_ac <= 0)
+		return true;
+	else
+		return false;
+}
+
 float toRadian(float degrees)
 {
 	return degrees * static_cast<float>(M_PI) / 180.0f;
@@ -324,6 +407,18 @@ Vec3f getBarycentric(Vec2i v0, Vec2i v1, Vec2i v2, Vec2i point)
 {
 	Vec3f barycentric;
 	float det = (v1.y - v2.y) * (v0.x - v2.x) + (v2.x - v1.x) * (v0.y  - v2.y);
+	barycentric[0] = (v1.y - v2.y) * (point.x - v2.x) + (v2.x - v1.x) * (point.y - v2.y);
+	barycentric[1] = (v2.y - v0.y) * (point.x - v2.x) + (v0.x - v2.x) * (point.y - v2.y);
+	barycentric[0] /= det;
+	barycentric[1] /= det;
+	barycentric[2] = 1.0f - (barycentric[0] + barycentric[1]);
+	return barycentric;
+}
+
+Vec3f getBarycentric(Vec2f v0, Vec2f v1, Vec2f v2, Vec2f point)
+{
+	Vec3f barycentric;
+	float det = (v1.y - v2.y) * (v0.x - v2.x) + (v2.x - v1.x) * (v0.y - v2.y);
 	barycentric[0] = (v1.y - v2.y) * (point.x - v2.x) + (v2.x - v1.x) * (point.y - v2.y);
 	barycentric[1] = (v2.y - v0.y) * (point.x - v2.x) + (v0.x - v2.x) * (point.y - v2.y);
 	barycentric[0] /= det;

@@ -75,11 +75,12 @@ void fillTriangel(Vec2i a, Vec2i b, Vec2i c, TGAImage& image, const TGAColor &co
 
 void fillTriangel(Vec3i a, Vec3i b, Vec3i c, TGAImage& image, TGAColor &color, Zbuffer &z_buffer);
 void fillTriangel(Vec3i a, Vec3i b, Vec3i c, TGAImage& image, const TGAColor &color, Zbuffer &z_buffer);
-
+void fillTriangel(Vec3i a, Vec3i b, Vec3i c, Vec3f n0, Vec3f n1, Vec3f n2, Vec3f l, TGAImage& image, TGAColor &color, Zbuffer &z_buffer);
 uint32_t getDepth(Vec3i a, Vec3i b, Vec3i c, Vec2i m);
 uint32_t getDepth(Vec3i a, Vec3i b, Vec2i m);
 
 bool isInsideTriangel(Vec2i &a, Vec2i &b, Vec2i &c, Vec2i &point);
+bool isInsideTriangel(Vec2f &a, Vec2f &b, Vec2f &c, Vec2f &point);
 float toRadian(float degrees);
 
 void fillTriangelInterpolation(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, TGAColor &color);
@@ -90,7 +91,7 @@ void fillTriangelInterpolation(Vec3i v0, Vec3i v1, Vec3i v2, TGAImage& image, co
 
 void fillRGB(Vec2i a, Vec2i b, Vec2i c, TGAImage& image);
 Vec3f getBarycentric(Vec2i v0, Vec2i v1, Vec2i v2, Vec2i point);
-
+Vec3f getBarycentric(Vec2f v0, Vec2f v1, Vec2f v2, Vec2f point);
 float bilinearInterpolation(Vec3f A, Vec3f B, Vec3f C, Vec3f D, Vec2f P);
 float linearInterpolation(Vec2f A, Vec2f B, float P);
 

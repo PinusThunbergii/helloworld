@@ -52,20 +52,32 @@ bool Model::OpenFile(const char *file)
             {
                 from_stream.erase();
                 test >> from_stream;
-                int i = 0;
-                std::stringstream numeric_stream(from_stream);
-                numeric_stream >> i;
-                i--;
-				numeric_stream >> trash;
+                int v = 0;
 				int t = 0;
-				numeric_stream >> t;
-				t--;
-				numeric_stream >> trash;
 				int n = 0;
-				numeric_stream >> n;
-				n--;
-				if(i > -1)
-					vec.push_back(i);
+                std::stringstream numeric_stream(from_stream);
+                numeric_stream >> v;
+                v--;
+				//numeric_stream >> trash;
+				
+				if (numeric_stream.str().find("//") != std::string::npos)
+				{
+					numeric_stream >> trash; numeric_stream >> trash;
+					numeric_stream >> n; 
+					n--;
+				}
+				else
+				{
+					numeric_stream >> trash;
+					numeric_stream >> t;
+					t--;
+					numeric_stream >> trash;
+					numeric_stream >> n;
+					n--;
+				}
+				
+				if(v > -1)
+					vec.push_back(v);
 				if(t > -1)
 					vec_t.push_back(t);
 				if(n > -1)
