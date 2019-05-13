@@ -212,3 +212,8 @@ bool Model::LoadDiffuse(const char * file)
 		hasDiffuse = true;
 	return false;
 }
+
+TGAImage & Model::GetDiffuse()
+{
+	return diffuse;
+}

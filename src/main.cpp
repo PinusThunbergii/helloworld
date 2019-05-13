@@ -172,7 +172,7 @@ void fill_interpolation(Vec3f *vertices, Vec3f *normals, Vec3f l, TGAImage& imag
 }
 
 
-void fill(Vec3f *vertices, Vec3f *normals, Vec3f l, TGAImage& image, float **zbuffer)
+void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, TGAImage& image, TGAImage& texture, float **zbuffer)
 {
 	size_t width = image.get_width();
 	size_t height = image.get_width();
@@ -192,7 +192,7 @@ void fill(Vec3f *vertices, Vec3f *normals, Vec3f l, TGAImage& image, float **zbu
 	Vec2i current_point;
 	Vec2i a_2(vertices[0].x + 0.5f, vertices[0].y + 0.5f), b_2(vertices[1].x + 0.5f, vertices[1].y + 0.5f), c_2(vertices[2].x + 0.5f, vertices[2].y + 0.5f);
 
-//#define USE_NORMALS
+#define USE_NORMALS
 
 	float light_intensity[3] = { l * normals[0], l * normals[1], l * normals[2] };
 
@@ -222,14 +222,25 @@ void fill(Vec3f *vertices, Vec3f *normals, Vec3f l, TGAImage& image, float **zbu
 
 				i = fabs(i);
 				//std::cout << ad << " " << i << std::endl ;
-
+				Vec2f diffuse_coord = textures[0] * bc_coord[0] + textures[1] * bc_coord[1] + textures[2] * bc_coord[2];
+				diffuse_coord.x *= texture.get_width();
+				diffuse_coord.y = 1.0f - diffuse_coord.y;
+				diffuse_coord.y *= texture.get_height();
+				TGAColor diffuse_color = texture.get(diffuse_coord.x, diffuse_coord.y);
 				if (y >= image.get_height() || y < 0)
 					continue;
 				if (zbuffer[x][y] < z)
 				{
 					zbuffer[x][y] = z;
-					TGAColor af(i * 255, i * 255, i * 255, 255);
-					image.set(x, y, af);
+					//TGAColor af(i * 255, i * 255, i * 255, 255);
+					//TGAColor af(i * 255, i * 255, i * 255, 255);
+					diffuse_color.r *= i;
+					diffuse_color.g *= i;
+					diffuse_color.b *= i;
+					/*diffuse_color.r = bc_coord[0] * 255;
+					diffuse_color.g = bc_coord[1] * 255;
+					diffuse_color.b = bc_coord[2] * 255;*/
+					image.set(x, y, diffuse_color);
 					//std::cout << x << " | " << y << " | " << z << " | " << bc_coord << " || " << a.z << " " << b.z  << " "  << c.z  << std::endl;
 				}
 			}
@@ -286,15 +297,18 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 	for (size_t i=0; i<model.FacesSize(); i++) 
 	{
 		const std::vector<int>& face = model.GetFace(i);
+		const std::vector<int>& texture = model.GetFaceTexture(i);
 		const std::vector<int>& normal = model.GetFaceNormal(i);
 
 
 		Vec3f model_space_vertices[3];
 		Vec3f model_space_normal[3];
+		Vec2f model_space_texture[3];
 		for (size_t i = 0; i < 3; i++)
 		{
 			model_space_vertices[i] = model.GetVertex(face[i]);
 			model_space_normal[i] = model.GetVertexNormal(normal[i]);
+			model_space_texture[i] = model.GetVertexTexture(texture[i]);
 		}
 			
 		
@@ -319,7 +333,7 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 #if d == 1
 			fillTriangel(screen_space_vertices[0], screen_space_vertices[1], screen_space_vertices[2], image, color, zbuffer);
 #elif d == 2
-			fill(screen_space_vertices, screen_space_normals, light_dir, image, z_buffer);
+			fill(screen_space_vertices, model_space_texture, screen_space_normals, light_dir, image, model.GetDiffuse(), z_buffer);
 			//draw_edges(screen_space_vertices, image);
 			//draw_normals(screen_space_vertices, screen_space_normals, image);
 #else	
@@ -384,6 +398,7 @@ int main(int argc, char** argv)
 	zbuffer_name += std::string("_z_buffer.tga");	
 	TGAImage image(width, height, TGAImage::RGB);
 	Model model(input.c_str());
+	model.LoadDiffuse(diffuse.c_str());
 	render(image, model, zbuffer_name);
 	image.flip_vertically(); 
 	image.write_tga_file(output.c_str());

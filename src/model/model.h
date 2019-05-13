@@ -28,6 +28,7 @@ public:
 	Vec3f GetVertexNormal(size_t i) const;
 	std::string& GetStat();
 	bool LoadDiffuse(const char * file);
+	TGAImage& GetDiffuse();
 private:
     std::fstream fileReader;
     std::vector<Vec3f> vertices;
