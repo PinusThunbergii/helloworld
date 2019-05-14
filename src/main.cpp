@@ -172,7 +172,7 @@ void fill_interpolation(Vec3f *vertices, Vec3f *normals, Vec3f l, TGAImage& imag
 }
 
 
-void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, TGAImage& image, TGAImage& texture, float **zbuffer)
+void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, Vec3f w_comp, TGAImage& image, TGAImage& texture, float **zbuffer)
 {
 	size_t width = image.get_width();
 	size_t height = image.get_width();
@@ -192,7 +192,7 @@ void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, TGAImage& i
 //#define USE_NORMALS
 
 	float light_intensity[3] = { l * normals[0], l * normals[1], l * normals[2] };
-
+	
 	//Vec3i n = cross(a-b, a-c);
 	for (int x = top_left.x; x < bottom_right.x; x++)
 	{
@@ -208,18 +208,25 @@ void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, TGAImage& i
 				int z = 0;
 				Vec3f bc_coord = getBarycentric(a_2, b_2, c_2, current_point);
 				z = (vertices[0].z * bc_coord[0] + vertices[1].z * bc_coord[1] + vertices[2].z * bc_coord[2]) + 0.5f;
+
+				
+				Vec3f bc_clip = Vec3f(bc_coord.x / w_comp[0], bc_coord.y / w_comp[1], bc_coord.z / w_comp[2]);
+				bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z);
+				//float z = (vertices[0].z * bc_clip[0] + vertices[1].z * bc_clip[1] + vertices[2].z * bc_clip[2]) + 0.5f;
 				//float i = light_intensity[0] * bc_coord[0] + light_intensity[1] * bc_coord[1] + light_intensity[2] * bc_coord[2];
 #ifdef USE_NORMALS
 				Vec3f ad = normals[0] * bc_coord[0] + normals[1] * bc_coord[1] + normals[2] * bc_coord[2];
+				Vec3f true_ad = normals[0] * bc_clip[0] + normals[1] * bc_clip[1] + normals[2] * bc_clip[2];
 				float i = ad.normalize() * l;
 				//drawLine(x, y, ad.x + x, ad.y + y, image, blue);
 #else
 				float i = light_intensity[0] * bc_coord[0] + light_intensity[1] * bc_coord[1] + light_intensity[2] * bc_coord[2];
+				float true_i = light_intensity[0] * bc_clip[0] + light_intensity[1] * bc_clip[1] + light_intensity[2] * bc_clip[2];
 #endif
 
 				i = fabs(i);
 				//std::cout << ad << " " << i << std::endl ;
-				Vec2f diffuse_coord = textures[0] * bc_coord[0] + textures[1] * bc_coord[1] + textures[2] * bc_coord[2];
+				Vec2f diffuse_coord = textures[0] * bc_clip[0] + textures[1] * bc_clip[1] + textures[2] * bc_clip[2];
 				//diffuse_coord.x = 1.0f - diffuse_coord.x;
 				diffuse_coord.x *= texture.get_width();
 				diffuse_coord.y = 1.0f - diffuse_coord.y;
@@ -312,9 +319,13 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 		
 		Vec3f screen_space_vertices[3];
 		Vec3f screen_space_normals[3];
+		Vec3f w_comp;
 		for(size_t i = 0; i < 3; i++)
 		{
-			screen_space_vertices[i] = vec4f_to_vec3f(viewportMatrix * vec3f_to_vec4f(model_space_vertices[i]));
+			//screen_space_vertices[i] = vec4f_to_vec3f(viewportMatrix * vec3f_to_vec4f(model_space_vertices[i]));
+			Vec4f tmp = viewportMatrix * vec3f_to_vec4f(model_space_vertices[i]);
+			screen_space_vertices[i] = vec4f_to_vec3f(tmp);
+			w_comp[i] = tmp[3];
 			//screen_space_normals[i] = vec4f_to_vec3f(viewportMatrix.transpose() * vec3f_to_vec4f_v(model_space_normal[i])).normalize();
 			screen_space_normals[i] = vec4f_to_vec3f( look.invert().transpose()  * vec3f_to_vec4f_v(model_space_normal[i]) ).normalize();
 		}							
@@ -331,7 +342,7 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 #if d == 1
 			fillTriangel(screen_space_vertices[0], screen_space_vertices[1], screen_space_vertices[2], image, color, zbuffer);
 #elif d == 2
-			fill(screen_space_vertices, model_space_texture, screen_space_normals, light_dir, image, model.GetDiffuse(), z_buffer);
+			fill(screen_space_vertices, model_space_texture, screen_space_normals, light_dir, w_comp, image, model.GetDiffuse(), z_buffer);
 			//draw_edges(screen_space_vertices, image);
 			//draw_normals(screen_space_vertices, screen_space_normals, image);
 #else	
