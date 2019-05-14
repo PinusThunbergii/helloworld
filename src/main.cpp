@@ -176,9 +176,6 @@ void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, TGAImage& i
 {
 	size_t width = image.get_width();
 	size_t height = image.get_width();
-	
-	/*Vec2i bound_box_min = ;
-	Vec2i bound_box_max = ;*/
 
 	if ((vertices[0].x == vertices[1].x && vertices[0].x == vertices[2].x) || (vertices[0].y == vertices[1].y && vertices[0].y == vertices[2].y))
 		return;
@@ -192,7 +189,7 @@ void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, TGAImage& i
 	Vec2i current_point;
 	Vec2i a_2(vertices[0].x + 0.5f, vertices[0].y + 0.5f), b_2(vertices[1].x + 0.5f, vertices[1].y + 0.5f), c_2(vertices[2].x + 0.5f, vertices[2].y + 0.5f);
 
-#define USE_NORMALS
+//#define USE_NORMALS
 
 	float light_intensity[3] = { l * normals[0], l * normals[1], l * normals[2] };
 
@@ -223,6 +220,7 @@ void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, TGAImage& i
 				i = fabs(i);
 				//std::cout << ad << " " << i << std::endl ;
 				Vec2f diffuse_coord = textures[0] * bc_coord[0] + textures[1] * bc_coord[1] + textures[2] * bc_coord[2];
+				//diffuse_coord.x = 1.0f - diffuse_coord.x;
 				diffuse_coord.x *= texture.get_width();
 				diffuse_coord.y = 1.0f - diffuse_coord.y;
 				diffuse_coord.y *= texture.get_height();
@@ -288,8 +286,8 @@ void render(TGAImage &image, Model &model, std::string & zbuffer_name)
 	Vec3f up(0.0f, 1.0f, 0.0f);
 	Vec3f light_dir(0.0f, 0.0f, -1.0f );
 
-	camera_pos =  vec4f_to_vec3f(RotateY(45.0f) * RotateX(15.0f) * vec3f_to_vec4f(camera_pos));
-	//camera_pos =  vec4f_to_vec3f(RotateX(15.0f) * vec3f_to_vec4f(camera_pos));
+	//camera_pos =  vec4f_to_vec3f(RotateY(45.0f) * RotateX(15.0f) * vec3f_to_vec4f(camera_pos));
+	camera_pos =  vec4f_to_vec3f(RotateX(-35.0f) * vec3f_to_vec4f(camera_pos));
 	mat<4, 4, float> pro = perspective_projection_fov(1.0f, 8.0f, 60, 60);
 	mat<4, 4, float> look = lookAt(camera_pos, up, center);
 	mat<4, 4, float> viewportMatrix =  viewport(0, 0, image.get_width(), image.get_height(), 1024)  * pro * look;// * norm;* RotateX(35.0f) * RotateY(20.0f)  * pro
@@ -397,6 +395,11 @@ int main(int argc, char** argv)
 		zbuffer_name = output.substr(0, extention_start);
 	zbuffer_name += std::string("_z_buffer.tga");	
 	TGAImage image(width, height, TGAImage::RGB);
+
+	/*Model grid("..\\..\\obj\\plain.obj");
+	grid.LoadDiffuse("..\\..\\obj\\grid_.tga");
+	render(image, grid, zbuffer_name);*/
+
 	Model model(input.c_str());
 	model.LoadDiffuse(diffuse.c_str());
 	render(image, model, zbuffer_name);
