@@ -212,6 +212,9 @@ void fill(Vec3f *vertices, Vec2f *textures, Vec3f *normals, Vec3f l, Vec3f w_com
 				
 				Vec3f bc_clip = Vec3f(bc_coord.x / w_comp[0], bc_coord.y / w_comp[1], bc_coord.z / w_comp[2]);
 				bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z);
+
+				float rPz_plus1 = 1.0f / (bc_coord[0] / w_comp[0] + bc_coord[1] / w_comp[1] + bc_coord[2] / w_comp[2]);
+				bc_clip = Vec3f(bc_coord[0] / w_comp[0], bc_coord[1] / w_comp[1], bc_coord[2] / w_comp[2]) * rPz_plus1;
 				//float z = (vertices[0].z * bc_clip[0] + vertices[1].z * bc_clip[1] + vertices[2].z * bc_clip[2]) + 0.5f;
 				//float i = light_intensity[0] * bc_coord[0] + light_intensity[1] * bc_coord[1] + light_intensity[2] * bc_coord[2];
 #ifdef USE_NORMALS
